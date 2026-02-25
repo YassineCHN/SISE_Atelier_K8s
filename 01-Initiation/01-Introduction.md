@@ -38,9 +38,6 @@ kubectl get nodes
 
 ---
 
-Section 1b · MD
-Copier
-
 ### b. Préparer les images Docker
 
 Avant de déployer quoi que ce soit sur K8s, il faut des images Docker. Nous allons en construire 3 versions successives d'une API Python.
