@@ -52,16 +52,13 @@ Placez-vous dans le dossier `iris-project/` et lancez les builds :
 
 ```bash
 # Version 0.1.0 — Random Forest
-docker build --build-arg MODEL_NAME=rf --build-arg VERSION=0.1.0 \
-  -t mlops-server:0.1.0 ./server
+docker build --build-arg MODEL_NAME=rf --build-arg VERSION=0.1.0 -t mlops-server:0.1.0 ./server
 
 # Version 0.2.0 — SVM
-docker build --build-arg MODEL_NAME=svm --build-arg VERSION=0.2.0 \
-  -t mlops-server:0.2.0 ./server
+docker build --build-arg MODEL_NAME=svm --build-arg VERSION=0.2.0 -t mlops-server:0.2.0 ./server
 
 # Version 0.3.0 — Régression Logistique
-docker build --build-arg MODEL_NAME=logreg --build-arg VERSION=0.3.0 \
-  -t mlops-server:0.3.0 ./server
+docker build --build-arg MODEL_NAME=logreg --build-arg VERSION=0.3.0 -t mlops-server:0.3.0 ./server
 
 # Frontend (une seule version)
 docker build -t mlops-client:latest ./client
