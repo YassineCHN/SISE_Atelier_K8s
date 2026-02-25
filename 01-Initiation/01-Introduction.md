@@ -123,7 +123,7 @@ spec:
     - containerPort: 8000
 ```
 
-3. Soumettez ce fichier au cluster avec `kubectl apply -f pod.yaml`, puis listez les pods actifs.
+3. Soumettez ce fichier au cluster avec `kubectl apply -f k8s/pod.yaml`, puis listez les pods actifs.
 
 4. Inspectez le pod en détail avec `kubectl get pod api-pod -o yaml`. Repérez les champs `spec` (état désiré) et `status` (état réel).
 
@@ -190,7 +190,7 @@ Vous remarquerez qu'il ne réapparaît **pas** tout seul — un Pod seul n'a pas
 
 #### 📋 Plusieurs pods en parallèle
 
-1. Éditez `pod.yaml` pour déclarer 3 pods (un par version d'image) dans le même fichier, séparés par `---`.
+1. Éditez `pod.yaml` pour déclarer 3 pods (un par version d'image) dans le même fichier, séparés par `---` :
 
 ```yaml
 apiVersion: v1
@@ -236,22 +236,158 @@ spec:
     - containerPort: 8000
 ```
 
-2. Appliquez le fichier, listez les pods, puis supprimez manuellement le deuxième. Se recrée-t-il ?
+2. Appliquez le fichier et vérifiez que les 3 pods sont bien en cours d'exécution :
 
-3. Relancez `kubectl apply -f pod.yaml`. Que se passe-t-il pour les pods déjà existants ? Pour le pod supprimé ?
+```bash
+kubectl apply -f k8s/pod.yaml
+kubectl get pods
+```
 
-4. Nettoyez tout avec `kubectl delete -f pod.yaml`.
+Vous devriez voir `api-pod-1`, `api-pod-2` et `api-pod-3` avec le statut `Running`.
 
-#### 📋 Exercice — Namespaces
+3. Supprimez manuellement le deuxième pod :
 
-Les Namespaces permettent de partitionner logiquement les ressources d'un cluster. Ils servent typiquement à isoler les environnements (dev, qualif, prod) au sein du même cluster.
+```bash
+kubectl delete pod api-pod-2
+kubectl get pods
+```
 
-- Renseignez-vous sur le concept de Namespace Kubernetes.
-- Créez un fichier `namespace.yaml` déclarant trois namespaces : `dev`, `qualif` et `prod`.
-- Déployez `api:0.1.0` dans `prod`, `api:0.2.0` dans `qualif` et `api:0.3.0` dans `dev`. Chaque pod doit s'appeler `api-pod` et porter un label `environment` correspondant.
-- Basculez entre les namespaces et vérifiez que chaque pod n'est visible que dans le bon contexte.
-- Filtrez tous les pods portant le label `environment=dev`.
-- Nettoyez avec `kubectl delete -f pod.yaml` puis `kubectl delete -f namespace.yaml`.
+`api-pod-2` a disparu et **ne réapparaît pas** — un Pod déclaré seul n'a aucun mécanisme de self-healing.
+
+4. Relancez `kubectl apply -f k8s/pod.yaml` :
+
+```bash
+kubectl apply -f k8s/pod.yaml
+kubectl get pods
+```
+
+- Les pods déjà existants (`api-pod-1` et `api-pod-3`) ne sont **pas recréés** — `kubectl apply` détecte qu'ils correspondent déjà à l'état déclaré et ne fait rien.
+- Le pod supprimé (`api-pod-2`) est **recréé**, car il manque par rapport à ce que déclare le fichier.
+
+5. Nettoyez tout :
+
+```bash
+kubectl delete -f k8s/pod.yaml
+```
+
+---
+
+#### 📋 Namespaces
+
+Par défaut, tous les pods que vous créez atterrissent dans le namespace `default` — ils sont tous mélangés au même endroit. Les Namespaces permettent de diviser logiquement les ressources d'un cluster en sous-groupes distincts, comme le montre le schéma ci-dessous :
+<p align="center">
+    <img width="600" height="576" alt="image" src="https://github.com/user-attachments/assets/15bc9f09-e7c9-4c5d-8f6a-916b8146bf12" />
+</p>
+
+Chaque namespace est un espace isolé : un pod nommé `api-pod` peut exister simultanément dans `dev`, `qualif` et `prod` sans conflit. Ils servent typiquement à isoler les environnements au sein du même cluster.
+
+1. Créez `k8s/namespace.yaml` :
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: qualif
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod
+```
+
+Appliquez-le :
+
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl get namespaces
+```
+
+2. Créez `k8s/pods-namespaces.yaml` avec un pod par namespace :
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-pod
+  namespace: prod
+  labels:
+    app: api
+    environment: prod
+spec:
+  containers:
+  - name: api
+    image: api:0.1.0
+    ports:
+    - containerPort: 8000
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-pod
+  namespace: qualif
+  labels:
+    app: api
+    environment: qualif
+spec:
+  containers:
+  - name: api
+    image: api:0.2.0
+    ports:
+    - containerPort: 8000
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-pod
+  namespace: dev
+  labels:
+    app: api
+    environment: dev
+spec:
+  containers:
+  - name: api
+    image: api:0.3.0
+    ports:
+    - containerPort: 8000
+```
+
+Appliquez-le :
+
+```bash
+kubectl apply -f k8s/pods-namespaces.yaml
+```
+
+3. Vérifiez que chaque pod n'est visible que dans son namespace :
+
+```bash
+kubectl get pods -n prod
+kubectl get pods -n qualif
+kubectl get pods -n dev
+```
+
+Sans préciser de namespace, les pods ne sont pas visibles :
+
+```bash
+kubectl get pods   # Ne retourne rien — le namespace par défaut est "default"
+```
+
+4. Filtrez tous les pods portant le label `environment=dev` dans tous les namespaces :
+
+```bash
+kubectl get pods -l environment=dev --all-namespaces
+```
+
+5. Nettoyez tout :
+
+```bash
+kubectl delete -f k8s/pods-namespaces.yaml
+kubectl delete -f k8s/namespace.yaml
+```
 
 ---
 
