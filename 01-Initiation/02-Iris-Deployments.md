@@ -266,6 +266,8 @@ La commande `jsonpath` doit retourner `mlops-server:0.1.0` pour chaque pod. Rech
 >
 > C'est la stratégie recommandée par défaut. Elle garantit une disponibilité continue et permet un rollback rapide. Elle est adaptée quand les versions v1 et v2 peuvent coexister sans problème (même format de réponse API, même schéma de base de données, etc.).
 
+---
+
 ### b. Blue/Green Deployment
 
 Le **Blue/Green** consiste à faire tourner simultanément deux environnements complets : l'environnement actuel (**blue**, v0.1.0) et le nouvel environnement (**green**, v0.3.0). Le basculement du trafic se fait en une seule opération en modifiant le selector du Service — zéro downtime, et rollback instantané.
