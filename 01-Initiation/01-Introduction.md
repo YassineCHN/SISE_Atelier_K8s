@@ -38,13 +38,16 @@ kubectl get nodes
 
 ---
 
+Section 1b · MD
+Copier
+
 ### b. Préparer les images Docker
 
 Avant de déployer quoi que ce soit sur K8s, il faut des images Docker. Nous allons en construire 3 versions successives d'une API Python.
 
 #### 📋 Construction de 3 versions d'une image
 
-1. Créez un fichier `app.py` contenant une API FastAPI avec au moins deux routes : une route `/` et une route `/version`.
+1. Créez un fichier `app.py` contenant une API FastAPI avec deux routes : une route `/` et une route `/version`.
 
 ```python
 from fastapi import FastAPI
@@ -60,15 +63,40 @@ async def version():
     return {"version": "0.1.0"}
 ```
 
-2. Rédigez le `Dockerfile` nécessaire et construisez l'image en la taguant `api:0.1.0`. Testez-la avec :
+2. Créez le `Dockerfile` suivant à la racine du projet :
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install fastapi uvicorn
+
+COPY app.py .
+
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+3. Construisez et testez la première image :
 
 ```bash
+docker build -t api:0.1.0 .
 docker run --rm -p 8000:8000 api:0.1.0
 ```
 
-3. Modifiez le code (ajoutez une route, changez le numéro de version) et produisez deux nouvelles images : `api:0.2.0` et `api:0.3.0`.
+Ouvrez **http://localhost:8000/version** — vous devriez voir `{"version": "0.1.0"}`.
 
----
+4. Modifiez `app.py` (changez le numéro de version et ajoutez une route) puis produisez les deux versions suivantes :
+
+```bash
+# Après modification pour la version 0.2.0
+docker build -t api:0.2.0 .
+
+# Après modification pour la version 0.3.0
+docker build -t api:0.3.0 .
+```
+
+À la fin de cette étape, vous disposez de 3 images locales : `api:0.1.0`, `api:0.2.0` et `api:0.3.0`.
 
 ### c. Déployer un Pod
 
@@ -102,11 +130,64 @@ spec:
 
 4. Inspectez le pod en détail avec `kubectl get pod api-pod -o yaml`. Repérez les champs `spec` (état désiré) et `status` (état réel).
 
-5. Ouvrez un shell dans le pod avec `kubectl exec -it api-pod -- /bin/bash`, puis testez l'API en interne avec `curl`.
+5. Ouvrir un shell dans le pod et tester l'API en interne
 
-6. Trouvez et exécutez les commandes pour : afficher les logs du pod, faire un port-forward sur le port 8000 et ouvrir l'API dans le navigateur.
+Ouvrez un shell interactif dans le pod :
 
-7. Supprimez le pod avec `kubectl delete pod api-pod`. Le pod réapparaît-il tout seul ? Supprimez-le proprement via le fichier YAML.
+```bash
+kubectl exec -it api-pod -- /bin/bash
+```
+
+Une fois dans le shell, testez que l'API répond bien en interne :
+
+```bash
+curl http://localhost:8000
+curl http://localhost:8000/version
+```
+
+Quittez le shell avec `exit`.
+
+6. Afficher les logs et accéder à l'API depuis le navigateur
+
+Affichez les logs du pod :
+
+```bash
+kubectl logs api-pod
+```
+
+Exposez le pod en local avec un port-forward :
+
+```bash
+kubectl port-forward pod/api-pod 8000:8000
+```
+
+Laissez cette commande tourner dans votre terminal, puis ouvrez **http://localhost:8000/docs** dans votre navigateur. Vous verrez l'interface Swagger de FastAPI.
+
+> 💡 Le port-forward crée un tunnel temporaire entre votre poste et le pod. C'est utile pour déboguer, mais ce n'est pas la façon d'exposer un service en production — c'est le rôle du Service, que nous verrons à la section suivante.
+
+7. Supprimer le pod
+
+Supprimez le pod directement par son nom :
+
+```bash
+kubectl delete pod api-pod
+```
+
+Vérifiez qu'il a bien disparu :
+
+```bash
+kubectl get pods
+```
+
+Vous remarquerez qu'il ne réapparaît **pas** tout seul — un Pod seul n'a pas de mécanisme de self-healing. C'est exactement le problème que règle le **Deployment** à la section suivante.
+
+Supprimez proprement via le fichier YAML :
+
+```bash
+kubectl delete -f k8s/pod.yaml
+```
+
+> 💡 Supprimer via le fichier est la bonne pratique : cela supprime toutes les ressources déclarées dans le fichier en une seule commande, sans avoir à retenir les noms.
 
 #### 📋 Plusieurs pods en parallèle
 
