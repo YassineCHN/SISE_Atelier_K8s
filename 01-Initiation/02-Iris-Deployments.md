@@ -205,7 +205,7 @@ Vous avez maintenant un backend Iris en version `0.1.0` (Random Forest) qui tour
 
 Dans cette partie, nous allons explorer trois stratégies pour mettre à jour ce backend **sans interrompre le service**.
 
-### a. Rolling Update
+## a. Rolling Update
 
 Le **Rolling Update** est la stratégie par défaut de Kubernetes. Les pods sont remplacés progressivement : Kubernetes crée un nouveau pod avec la nouvelle image, attend qu'il soit prêt, puis supprime un ancien pod — et ainsi de suite jusqu'à ce que tous les pods soient mis à jour.
 
@@ -237,7 +237,7 @@ image: mlops-server:0.2.0
 kubectl apply -f k8s/server.yaml
 ```
 
-4. Observez le second terminal : les pods `v0.1.0` sont remplacés un par un par des pods `v0.2.0`. Le service reste disponible pendant toute la durée de la mise à jour.
+4. Observez le second terminal : de nouveaux pods apparaissent en `ContainerCreating` tandis que les anciens passent en `Terminating` — Kubernetes remplace les pods un par un. Le service reste disponible pendant toute la durée de la mise à jour.
 
 5. Vérifiez le statut du rollout :
 
@@ -250,22 +250,21 @@ kubectl rollout status deployment/mlops-server
 7. Simulez un problème et effectuez un **rollback** :
 
 ```bash
-# Annule la dernière mise à jour et revient à la version précédente
 kubectl rollout undo deployment/mlops-server
 ```
 
-Vérifiez que les pods sont revenus en `0.1.0` :
+Vérifiez que le rollback est effectif en consultant l'image active et le statut du rollout :
 
 ```bash
 kubectl get pods -l app=mlops-server -o jsonpath="{.items[*].spec.containers[*].image}"
 kubectl rollout status deployment/mlops-server
 ```
 
+La commande `jsonpath` doit retourner `mlops-server:0.1.0` pour chaque pod. Rechargez également **http://localhost:30801** pour confirmer que la version est revenue en `0.1.0` et le modèle en `rf`.
+
 > 💡 **Quand utiliser le Rolling Update ?**
 >
 > C'est la stratégie recommandée par défaut. Elle garantit une disponibilité continue et permet un rollback rapide. Elle est adaptée quand les versions v1 et v2 peuvent coexister sans problème (même format de réponse API, même schéma de base de données, etc.).
-
----
 
 ### b. Blue/Green Deployment
 
