@@ -24,7 +24,7 @@ Docker Desktop embarque un cluster Kubernetes qu'il suffit d'activer. Contrairem
 
 #### 📋 Démarrage du cluster K8s
 
-1. Ouvrez Docker Desktop, allez dans **Settings**, cochez **Enable Kubernetes** puis cliquez sur **Apply & Restart**.
+1. Ouvrez Docker Desktop, allez dans **Settings**, cochez **Enable Kubernetes** puis cliquez sur **Apply** puis **Install**.
 2. Une fois le cluster lancé, son statut apparaît dans le bandeau bas de Docker Desktop.
 3. Ouvrez un terminal et exécutez les commandes suivantes pour vérifier l'installation :
 
