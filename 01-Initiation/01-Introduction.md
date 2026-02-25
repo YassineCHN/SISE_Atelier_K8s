@@ -168,10 +168,14 @@ Une fois la vérification faite, arrêtez le port-forward avec `Ctrl+C` dans le 
 
 7. Supprimer le pod
 
-Supprimez le pod directement par son nom :
+Deux façons de supprimer le pod, au choix :
 
 ```bash
+# Par son nom
 kubectl delete pod api-pod
+
+# Ou via le fichier YAML (supprime toutes les ressources déclarées dans le fichier)
+kubectl delete -f k8s/pod.yaml
 ```
 
 Vérifiez qu'il a bien disparu :
@@ -182,13 +186,7 @@ kubectl get pods
 
 Vous remarquerez qu'il ne réapparaît **pas** tout seul — un Pod seul n'a pas de mécanisme de self-healing. C'est exactement le problème que règle le **Deployment** à la section suivante.
 
-Supprimez proprement via le fichier YAML :
-
-```bash
-kubectl delete -f k8s/pod.yaml
-```
-
-> 💡 Supprimer via le fichier est la bonne pratique : cela supprime toutes les ressources déclarées dans le fichier en une seule commande, sans avoir à retenir les noms.
+> 💡 En pratique, `kubectl delete -f fichier.yaml` est la méthode recommandée car elle supprime toutes les ressources déclarées dans le fichier en une seule commande, sans avoir à retenir les noms.
 
 #### 📋 Plusieurs pods en parallèle
 
