@@ -67,7 +67,7 @@ docker build -t mlops-client:latest ./client
 Vérifiez que les 4 images sont bien présentes :
 
 ```bash
-docker images | grep mlops
+docker images --filter=reference="*mlops*"
 ```
 
 > 💡 Le `--build-arg` permet de passer des arguments au `Dockerfile` au moment du build. Ici, `MODEL_NAME` détermine quel algorithme est entraîné et embarqué dans l'image. Chaque version est ainsi autonome — pas besoin de monter un fichier de modèle externe.
@@ -257,7 +257,7 @@ kubectl rollout undo deployment/mlops-server
 Vérifiez que les pods sont revenus en `0.1.0` :
 
 ```bash
-kubectl get pods -l app=mlops-server
+kubectl get pods -l app=mlops-server -o jsonpath="{.items[*].spec.containers[*].image}"
 kubectl rollout status deployment/mlops-server
 ```
 
@@ -371,7 +371,8 @@ Vérifiez que les 6 pods (3 blue + 3 green) sont Running :
 kubectl get pods -l app=mlops-server
 ```
 
-4. Vérifiez dans le frontend que le backend répond encore en version `0.1.0` (blue).
+4. Ouvrez le frontend sur **http://localhost:30801** et vérifiez dans la sidebar "Info backend" que la version affichée est bien `0.1.0` et le modèle `rf` — le trafic est bien sur blue.
+
 
 5. **Basculez le trafic vers green** en modifiant le selector du Service dans `k8s/server-bluegreen.yaml` :
 
@@ -388,7 +389,7 @@ Appliquez la modification :
 kubectl apply -f k8s/server-bluegreen.yaml
 ```
 
-6. Rechargez le frontend — la version est maintenant `0.3.0` (logreg). Le basculement a été instantané.
+6. Rechargez **http://localhost:30801** — la version est maintenant `0.3.0` et le modèle `logreg`. Le basculement a été instantané.
 
 7. **Rollback instantané** : pour revenir à blue, remettez `version: blue` dans le selector et réappliquez. Aucun pod n'a besoin d'être recréé.
 
