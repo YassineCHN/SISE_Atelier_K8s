@@ -93,7 +93,7 @@ docker build -t api:0.2.0 .
 docker build -t api:0.3.0 .
 ```
 
-À la fin de cette étape, vous disposez de 3 images locales : `api:0.1.0`, `api:0.2.0` et `api:0.3.0`.
+À la fin de cette étape, vous disposez de 3 images locales : `api:0.1.0`, `api:0.2.0` et `api:0.3.0`. (vérifiez avec `docker images`)
 
 ### c. Déployer un Pod
 
