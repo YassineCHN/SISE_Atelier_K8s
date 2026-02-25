@@ -160,7 +160,9 @@ Exposez le pod en local avec un port-forward :
 kubectl port-forward pod/api-pod 8000:8000
 ```
 
-Laissez cette commande tourner dans votre terminal, puis ouvrez **http://localhost:8000/docs** dans votre navigateur. Vous verrez l'interface Swagger de FastAPI.
+Ouvrez **http://localhost:8000/docs** dans votre navigateur. Vous verrez l'interface Swagger de FastAPI.
+
+Une fois la vérification faite, arrêtez le port-forward avec `Ctrl+C` dans le terminal.
 
 > 💡 Le port-forward crée un tunnel temporaire entre votre poste et le pod. C'est utile pour déboguer, mais ce n'est pas la façon d'exposer un service en production — c'est le rôle du Service, que nous verrons à la section suivante.
 
