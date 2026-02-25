@@ -138,9 +138,11 @@ kubectl exec -it api-pod -- /bin/bash
 Une fois dans le shell, testez que l'API répond bien en interne :
 
 ```bash
-curl http://localhost:8000
-curl http://localhost:8000/version
+python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000').read())"
+python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/version').read())"
 ```
+
+> 💡 L'image `python:3.11-slim` est volontairement minimaliste et ne contient pas `curl`. On utilise directement le module `urllib` de Python, toujours disponible dans une image Python.
 
 Quittez le shell avec `exit`.
 
