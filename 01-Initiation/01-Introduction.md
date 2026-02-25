@@ -393,11 +393,19 @@ kubectl delete -f k8s/namespace.yaml
 
 ### d. Scaler avec un Deployment
 
-Un Pod seul ne se répare pas et ne se réplique pas. Le Deployment est la ressource K8s qui gère cela : il maintient un nombre souhaité de répliques, remplace automatiquement un pod tombé et permet les mises à jour progressives.
+Comme vu dans la section précédente, les Pods seuls ne se réparent pas, ne scalent pas, et sont difficiles à mettre à jour ou rollback.
+
+Un **Deployment** est une ressource Kubernetes de plus haut niveau qui gère les Pods pour vous, en gérant automatiquement la réplication, le scaling et les mises à jour tout en maintenant l'état souhaité.
+
+Quand un Pod tombe ou est supprimé dans un Deployment, Kubernetes en recrée automatiquement un nouveau pour converger vers l'état désiré. Le Deployment garantit aussi des mises à jour progressives en remplaçant graduellement les anciens Pods par les nouveaux, avec la possibilité de rollback en cas de problème.
+
+<p align="center">
+    <img width="600" height="1725" alt="image" src="https://github.com/user-attachments/assets/7416921a-b258-42ae-9976-c215a8647959" />
+</p>
 
 #### 📋 10 répliques avec auto-réparation
 
-1. Créez un fichier `deployment.yaml` :
+1. Créez un fichier `k8s/deployment.yaml` :
 
 ```yaml
 apiVersion: apps/v1
@@ -413,8 +421,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
+      maxUnavailable: 1    # Au maximum 1 pod indisponible pendant la mise à jour
+      maxSurge: 1          # Au maximum 1 pod supplémentaire créé pendant la mise à jour
   template:
     metadata:
       labels:
@@ -427,25 +435,67 @@ spec:
         - containerPort: 8000
 ```
 
-2. Appliquez ce fichier et vérifiez que 10 pods sont bien en cours d'exécution.
+2. Appliquez le fichier et vérifiez que 10 pods sont bien en cours d'exécution :
 
-3. Dans un second terminal, lancez `kubectl get deploy api-deploy --watch` pour observer le cluster en temps réel.
+```bash
+kubectl apply -f k8s/deployment.yaml
+kubectl get pods
+```
 
-4. Supprimez un pod manuellement. Que se passe-t-il ? Le Deployment maintient-il bien 10 répliques ?
+Vous devriez voir 10 pods avec des noms du type `api-deploy-xxxxxxxxx-xxxxx` et le statut `Running`.
 
-5. Modifiez `replicas` dans le YAML et relancez `kubectl apply`. Observez la montée/descente en charge.
+3. Ouvrez un **second terminal** et lancez la commande suivante pour observer le cluster en temps réel :
+
+```bash
+kubectl get pods --watch
+```
+
+4. Dans votre **premier terminal**, supprimez un pod manuellement (remplacez `<nom-du-pod>` par l'un des noms listés à l'étape 2) :
+
+```bash
+kubectl delete pod <nom-du-pod>
+```
+
+Observez le second terminal : Kubernetes détecte immédiatement la disparition du pod et en recrée un nouveau pour maintenir le compte à 10. C'est le **self-healing** en action.
+
+5. Faites varier le nombre de répliques en modifiant `replicas` dans le YAML, puis relancez `kubectl apply` :
+
+```bash
+kubectl apply -f k8s/deployment.yaml
+kubectl get pods --watch
+```
+
+Kubernetes supprime ou crée des pods progressivement jusqu'à atteindre le nombre souhaité.
+
+> 💡 **Deployment vs Pod**
+>
+> | | Pod seul | Deployment |
+> |---|---|---|
+> | Self-healing | ✗ | ✓ |
+> | Scaling | ✗ | ✓ |
+> | Rolling update | ✗ | ✓ |
 
 ---
 
 ### e. Exposer les pods avec un Service
 
-Les pods ont des adresses IP éphémères qui changent à chaque redémarrage. Un Service fournit un point d'accès stable (nom DNS + IP fixe) qui redirige le trafic vers un ensemble de pods via leurs labels.
+Pour accéder à l'application depuis un nom ou une adresse IP stable, on a besoin d'un **Service** Kubernetes placé devant un ensemble de pods.
+
+Les pods ont des adresses IP éphémères qui changent à chaque redémarrage. Un Service fournit un point d'accès stable (nom DNS + IP fixe) qui redirige le trafic vers les pods via leurs labels.
+
+<p align="center">
+    <img width="600" height="640" alt="image" src="https://github.com/user-attachments/assets/567cde9b-b16c-4122-bf61-362628abf8a1" />
+</p>
 
 #### 📋 Création d'un Service NodePort
 
-1. Vérifiez que votre deployment de 10 pods est toujours actif.
+1. Vérifiez que votre Deployment est toujours actif :
 
-2. Créez un fichier `service.yaml` :
+```bash
+kubectl get deploy api-deploy
+```
+
+2. Créez un fichier `k8s/service.yaml` :
 
 ```yaml
 apiVersion: v1
@@ -457,16 +507,34 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - port: 8000
-    nodePort: 30001
+  - port: 8000          # Port exposé à l'intérieur du cluster
+    nodePort: 30001     # Port accessible depuis votre machine
     protocol: TCP
   selector:
-    app: api
+    app: api            # Redirige le trafic vers tous les pods avec le label app=api
 ```
 
-3. Appliquez le service et ouvrez **http://localhost:30001/docs** dans le navigateur. Chaque requête est redirigée vers un pod différent.
+3. Appliquez le Service :
 
-> 💡 La combinaison **Deployment → Répliques de Pods → Service** est le socle minimal pour déployer une application sur Kubernetes.
+```bash
+kubectl apply -f k8s/service.yaml
+kubectl get service api-svc
+```
+
+4. Ouvrez **http://localhost:30001/docs** dans votre navigateur. Le Service répartit automatiquement les requêtes entre les 10 pods.
+
+5. Nettoyez tout :
+
+```bash
+kubectl delete -f k8s/service.yaml
+kubectl delete -f k8s/deployment.yaml
+```
+
+> 💡 La combinaison **Deployment → Répliques de Pods → Service** est le socle minimal pour survivre à Kubernetes.
+
+<p align="center">
+    <img width="550" height="281" alt="image" src="https://github.com/user-attachments/assets/35ae0d75-6e72-498f-8c04-2f9d7bdf82c5" />
+</p>
 
 ---
 
