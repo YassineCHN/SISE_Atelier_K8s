@@ -27,17 +27,10 @@ En partant de données météo brutes récupérées depuis une API publique, nou
 
 ## Prérequis
 
-- Kubernetes lancé en local (Docker Desktop avec Kubernetes activé, ou Minikube)
+- Kubernetes lancé en local (Docker Desktop avec Kubernetes activé)
 - `kubectl` configuré et connecté à votre cluster
 - `docker` CLI disponible
 - Notions de base sur les Pods, Deployments, Services et PersistentVolumeClaims (vues dans le TD principal Kubernetes)
-
-> 📝 **Docker Desktop vs Minikube**
->
-> Tous les manifestes YAML de ce TD fonctionnent de façon identique sur les deux environnements. Les seules différences sont :
->
-> - **Accès aux services** : avec Docker Desktop, les services NodePort sont directement accessibles sur `localhost`. Avec Minikube, utilisez `minikube service <nom-du-service>` pour ouvrir un service, ou `minikube tunnel` pour exposer les services LoadBalancer.
-> - **Images Docker locales** : avec Docker Desktop, les images buildées localement sont immédiatement disponibles pour Kubernetes. Avec Minikube, buildez les images dans l'environnement Docker de Minikube en exécutant d'abord `eval $(minikube docker-env)`, puis `docker build`.
 
 > 📝 **Structure du projet**
 >
@@ -180,7 +173,7 @@ kubectl get pods -l app=minio --watch
 # Attendez que le STATUS soit Running, puis Ctrl+C
 ```
 
-Ouvrez la console web MinIO sur **http://localhost:30900** (ou `minikube service minio-svc` sur Minikube). Connectez-vous avec `minioadmin` / `minioadmin`.
+Ouvrez la console web MinIO sur **http://localhost:30900**. Connectez-vous avec `minioadmin` / `minioadmin`.
 
 Créez un bucket nommé **`weather`** en cliquant sur **"Create Bucket"** dans l'interface.
 
@@ -404,7 +397,7 @@ models:
     staging:
       materialized: view     # Les modèles staging sont des vues légères
     marts:
-      materialized: table    # Les modèles marts sont persistés en tables
+      +materialized: external  # Les modèles marts sont écrits directement dans MinIO (Parquet)
 ```
 
 Créez `transformer/dbt_project/profiles.yml` :
@@ -465,6 +458,13 @@ Créez `transformer/dbt_project/models/marts/daily_weather_stats.sql` :
 ```sql
 -- Ce modèle mart agrège les données horaires en statistiques journalières.
 -- Il lit depuis le modèle staging ci-dessus (ref() est la façon dont dbt déclare les dépendances).
+-- La config external+location écrit le résultat directement dans MinIO au format Parquet.
+
+{{ config(
+    materialized='external',
+    location='s3://weather/transformed/daily_weather_stats.parquet',
+    format='parquet'
+) }}
 
 SELECT
     hour_timestamp::DATE            AS date,
@@ -764,7 +764,7 @@ Vérifiez que les pods sont prêts :
 kubectl get pods -l app=weather-api
 ```
 
-Ouvrez votre navigateur sur **http://localhost:30802/docs** (ou `minikube service weather-api-svc`).
+Ouvrez votre navigateur sur **http://localhost:30802/docs**.
 
 Vous devriez voir l'interface Swagger de FastAPI. Testez l'endpoint `/weather/summary` — il retourne vos statistiques journalières transformées par dbt. 🎉
 
