@@ -1,14 +1,14 @@
 # Kubernetes — Fiche 1 : Introduction à Kubernetes
 
-**Prise en main, déploiement et migration depuis Docker Compose**
+**Prise en main et déploiement sur Kubernetes**
 
 ## Objectifs
 
 - Démarrer un cluster Kubernetes local avec Docker Desktop
 - Comprendre les concepts fondamentaux : Pod, Deployment, Service
 - Écrire et appliquer des manifestes YAML déclaratifs
-- Gérer le cycle de vie des pods (scaling, rolling update, self-healing)
-- Porter une architecture Docker Compose vers Kubernetes
+- Gérer le cycle de vie des pods (scaling, self-healing)
+- Comprendre le mécanisme de Namespaces
 
 > 📝 **Prérequis**
 >
@@ -95,6 +95,8 @@ docker build -t api:0.3.0 .
 
 À la fin de cette étape, vous disposez de 3 images locales : `api:0.1.0`, `api:0.2.0` et `api:0.3.0`. (vérifiez avec `docker images`)
 
+---
+
 ### c. Déployer un Pod
 
 Le Pod est l'unité de base de Kubernetes : il encapsule un ou plusieurs conteneurs qui partagent le même réseau et le même stockage local. C'est l'équivalent K8s d'un conteneur Docker, en un peu plus riche.
@@ -123,11 +125,16 @@ spec:
     - containerPort: 8000
 ```
 
-3. Soumettez ce fichier au cluster avec `kubectl apply -f k8s/pod.yaml`, puis listez les pods actifs.
+3. Soumettez ce fichier au cluster avec `kubectl apply -f k8s/pod.yaml`, puis listez les pods actifs :
+
+```bash
+kubectl apply -f k8s/pod.yaml
+kubectl get pods
+```
 
 4. Inspectez le pod en détail avec `kubectl get pod api-pod -o yaml`. Repérez les champs `spec` (état désiré) et `status` (état réel).
 
-5. Ouvrir un shell dans le pod et tester l'API en interne
+5. **Ouvrir un shell dans le pod et tester l'API en interne**
 
 Ouvrez un shell interactif dans le pod :
 
@@ -146,7 +153,7 @@ python -c "import urllib.request; print(urllib.request.urlopen('http://localhost
 
 Quittez le shell avec `exit`.
 
-6. Afficher les logs et accéder à l'API depuis le navigateur
+6. **Afficher les logs et accéder à l'API depuis le navigateur**
 
 Affichez les logs du pod :
 
@@ -166,7 +173,7 @@ Une fois la vérification faite, arrêtez le port-forward avec `Ctrl+C` dans le 
 
 > 💡 Le port-forward crée un tunnel temporaire entre votre poste et le pod. C'est utile pour déboguer, mais ce n'est pas la façon d'exposer un service en production — c'est le rôle du Service, que nous verrons à la section suivante.
 
-7. Supprimer le pod
+7. **Supprimer le pod**
 
 Deux façons de supprimer le pod, au choix :
 
@@ -187,6 +194,8 @@ kubectl get pods
 Vous remarquerez qu'il ne réapparaît **pas** tout seul — un Pod seul n'a pas de mécanisme de self-healing. C'est exactement le problème que règle le **Deployment** à la section suivante.
 
 > 💡 En pratique, `kubectl delete -f fichier.yaml` est la méthode recommandée car elle supprime toutes les ressources déclarées dans le fichier en une seule commande, sans avoir à retenir les noms.
+
+---
 
 #### 📋 Plusieurs pods en parallèle
 
@@ -275,8 +284,9 @@ kubectl delete -f k8s/pod.yaml
 #### 📋 Namespaces
 
 Par défaut, tous les pods que vous créez atterrissent dans le namespace `default` — ils sont tous mélangés au même endroit. Les Namespaces permettent de diviser logiquement les ressources d'un cluster en sous-groupes distincts, comme le montre le schéma ci-dessous :
+
 <p align="center">
-    <img width="600" height="576" alt="image" src="https://github.com/user-attachments/assets/15bc9f09-e7c9-4c5d-8f6a-916b8146bf12" />
+    <img width="600" alt="Kubernetes Namespaces" src="https://github.com/user-attachments/assets/15bc9f09-e7c9-4c5d-8f6a-916b8146bf12" />
 </p>
 
 Chaque namespace est un espace isolé : un pod nommé `api-pod` peut exister simultanément dans `dev`, `qualif` et `prod` sans conflit. Ils servent typiquement à isoler les environnements au sein du même cluster.
@@ -400,7 +410,7 @@ Un **Deployment** est une ressource Kubernetes de plus haut niveau qui gère les
 Quand un Pod tombe ou est supprimé dans un Deployment, Kubernetes en recrée automatiquement un nouveau pour converger vers l'état désiré. Le Deployment garantit aussi des mises à jour progressives en remplaçant graduellement les anciens Pods par les nouveaux, avec la possibilité de rollback en cas de problème.
 
 <p align="center">
-    <img width="600" height="1725" alt="image" src="https://github.com/user-attachments/assets/7416921a-b258-42ae-9976-c215a8647959" />
+    <img width="600" alt="Kubernetes Deployment" src="https://github.com/user-attachments/assets/7416921a-b258-42ae-9976-c215a8647959" />
 </p>
 
 #### 📋 10 répliques avec auto-réparation
@@ -474,6 +484,8 @@ Kubernetes supprime ou crée des pods progressivement jusqu'à atteindre le nomb
 > | Self-healing | ✗ | ✓ |
 > | Scaling | ✗ | ✓ |
 > | Rolling update | ✗ | ✓ |
+>
+> En pratique, on ne déploie jamais un Pod seul en production — on passe toujours par un Deployment.
 
 ---
 
@@ -484,7 +496,7 @@ Pour accéder à l'application depuis un nom ou une adresse IP stable, on a beso
 Les pods ont des adresses IP éphémères qui changent à chaque redémarrage. Un Service fournit un point d'accès stable (nom DNS + IP fixe) qui redirige le trafic vers les pods via leurs labels.
 
 <p align="center">
-    <img width="600" height="640" alt="image" src="https://github.com/user-attachments/assets/567cde9b-b16c-4122-bf61-362628abf8a1" />
+    <img width="600" alt="Kubernetes Service" src="https://github.com/user-attachments/assets/567cde9b-b16c-4122-bf61-362628abf8a1" />
 </p>
 
 #### 📋 Création d'un Service NodePort
@@ -530,45 +542,11 @@ kubectl delete -f k8s/service.yaml
 kubectl delete -f k8s/deployment.yaml
 ```
 
-> 💡 La combinaison **Deployment → Répliques de Pods → Service** est le socle minimal pour survivre à Kubernetes :)
+> 💡 La combinaison **Deployment → Répliques de Pods → Service** est le socle minimal pour survivre à Kubernetes.
 
 <p align="center">
-    <img width="550" height="281" alt="image" src="https://github.com/user-attachments/assets/35ae0d75-6e72-498f-8c04-2f9d7bdf82c5" />
+    <img width="550" alt="Kubernetes MVP" src="https://github.com/user-attachments/assets/35ae0d75-6e72-498f-8c04-2f9d7bdf82c5" />
 </p>
-
----
-
-## 2. De Docker Compose vers Kubernetes
-
-Dans le TD Docker Compose, vous avez déployé un projet fullstack composé d'un frontend client et d'un backend de prédiction Iris. L'objectif ici est de porter cette même architecture sur Kubernetes, en remplaçant `docker-compose.yml` par des manifestes YAML K8s.
-
-| Docker Compose | Kubernetes |
-|---|---|
-| `service` | Deployment + Service |
-| `scale: N` | `replicas: N` |
-| `networks` | Labels + selectors |
-| `volumes` | PersistentVolumeClaim |
-| `environment` | ConfigMap / Secret |
-
-#### 📋 Exercice — Application fullstack Iris sur Kubernetes
-
-Vous allez reconstruire l'intégralité de l'architecture de prédiction Iris, cette fois sur K8s.
-
-1. Reconstruisez l'image `mlops-client:latest` correspondant au frontend.
-
-2. Entraînez 3 modèles de prédiction Iris différents et empaquetez-les dans 3 images Docker distinctes : `mlops-server:0.1.0`, `mlops-server:0.2.0` et `mlops-server:0.3.0`. Chaque image doit exposer un endpoint `/version` indiquant sa version.
-
-3. Créez un Deployment et un Service pour le frontend (`mlops-client:latest`).
-
-4. Créez un Deployment avec 3 répliques et un Service pour le backend (`mlops-server:0.1.0`).
-
-5. Connectez le frontend au backend en utilisant le nom du Service comme URL dans le code Python. Par exemple, si votre service backend s'appelle `mlops-api-service`, l'URL à utiliser sera `http://mlops-api-service:8000`. Kubernetes résout ce nom DNS automatiquement.
-
-6. Vérifiez que le frontend est accessible depuis le navigateur et que les prédictions fonctionnent.
-
-> 📝 **Pour la suite**
->
-> Conservez ce déploiement Iris actif : il servira de base pour la Fiche 2, qui portera sur les stratégies de mise à jour (Rolling Update, Blue/Green, Canary).
 
 ---
 
@@ -579,10 +557,18 @@ Vous allez reconstruire l'intégralité de l'architecture de prédiction Iris, c
 | `kubectl apply -f fichier.yaml` | Créer ou mettre à jour une ressource |
 | `kubectl delete -f fichier.yaml` | Supprimer les ressources déclarées |
 | `kubectl get pods` | Lister les pods du namespace courant |
+| `kubectl get pods -n <namespace>` | Lister les pods d'un namespace spécifique |
 | `kubectl get pods -l app=api` | Filtrer les pods par label |
+| `kubectl get pods --all-namespaces` | Lister les pods de tous les namespaces |
 | `kubectl describe pod <nom>` | Détails complets d'un pod |
 | `kubectl logs <pod>` | Afficher les logs d'un pod |
 | `kubectl exec -it <pod> -- /bin/bash` | Ouvrir un shell dans un pod |
-| `kubectl port-forward <pod> 8000:8000` | Exposer un pod en local |
-| `kubectl get deploy <nom> --watch` | Observer un deployment en temps réel |
-| `kubectl rollout undo deployment/<nom>` | Annuler la dernière mise à jour |
+| `kubectl port-forward pod/<nom> 8000:8000` | Exposer un pod en local |
+| `kubectl get deploy <nom>` | Inspecter un Deployment |
+| `kubectl get service <nom>` | Inspecter un Service |
+
+---
+
+> 📝 **La suite — Fiche 2**
+>
+> Dans la fiche 2, nous allons déployer un projet fullstack (frontend Streamlit + backend FastAPI de prédiction Iris) sur Kubernetes, puis pratiquer les trois grandes stratégies de mise à jour en production : **Rolling Update**, **Blue/Green** et **Canary deployment**.
