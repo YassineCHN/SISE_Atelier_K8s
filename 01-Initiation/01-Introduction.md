@@ -63,7 +63,7 @@ async def version():
     return {"version": "0.1.0"}
 ```
 
-2. Créez le `Dockerfile` suivant à la racine du projet :
+2. Créez le `Dockerfile` suivant à la racine du dossier 01 :
 
 ```dockerfile
 FROM python:3.11-slim
