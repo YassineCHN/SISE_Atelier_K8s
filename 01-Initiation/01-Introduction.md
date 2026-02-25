@@ -530,7 +530,7 @@ kubectl delete -f k8s/service.yaml
 kubectl delete -f k8s/deployment.yaml
 ```
 
-> 💡 La combinaison **Deployment → Répliques de Pods → Service** est le socle minimal pour survivre à Kubernetes.
+> 💡 La combinaison **Deployment → Répliques de Pods → Service** est le socle minimal pour survivre à Kubernetes :)
 
 <p align="center">
     <img width="550" height="281" alt="image" src="https://github.com/user-attachments/assets/35ae0d75-6e72-498f-8c04-2f9d7bdf82c5" />
