@@ -594,7 +594,7 @@ Ouvrez l'interface MinIO et vérifiez qu'un fichier est apparu sous `weather/tra
 > Vous pouvez déjà simuler une exécution complète du pipeline avec ces deux commandes :
 >
 > ```bash
-> kubectl create job ingest-$(date +%s) --from=cronjob/weather-ingester
+> kubectl create job weather-ingest-manual --from=cronjob/weather-ingester
 > # Attendez la completion, puis :
 > kubectl delete job weather-transformer && kubectl apply -f k8s/transformer-job.yaml
 > ```
@@ -748,7 +748,7 @@ spec:
   ports:
   - port: 8000
     targetPort: 8000
-    nodePort: 30800
+    nodePort: 30802
   type: NodePort
 ```
 
@@ -764,7 +764,7 @@ Vérifiez que les pods sont prêts :
 kubectl get pods -l app=weather-api
 ```
 
-Ouvrez votre navigateur sur **http://localhost:30800/docs** (ou `minikube service weather-api-svc`).
+Ouvrez votre navigateur sur **http://localhost:30802/docs** (ou `minikube service weather-api-svc`).
 
 Vous devriez voir l'interface Swagger de FastAPI. Testez l'endpoint `/weather/summary` — il retourne vos statistiques journalières transformées par dbt. 🎉
 
