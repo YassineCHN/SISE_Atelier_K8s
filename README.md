@@ -63,7 +63,7 @@ Une fois Docker Desktop installé et lancé :
 - Ouvrez **Settings** (icône ⚙️ en haut à droite)
 - Allez dans l'onglet **Kubernetes**
 - Cochez **Enable Kubernetes**
-- Cliquez sur **Apply & Restart**
+- Cliquez sur **Apply** puis **Install**
 
 L'installation prend quelques minutes. Une fois terminée, une icône Kubernetes verte apparaît dans le bandeau bas de Docker Desktop.
 
@@ -123,10 +123,10 @@ Vous devez voir un node `minikube` avec le statut `Ready`.
 
 | Atelier | Fichier | Outil requis | Durée estimée |
 |---|---|---|---|
-| Fiche 1 — Prise en main | `01-Initiation/01-Introduction.md` | Docker Desktop | ~45 min |
-| Fiche 2 — Déploiement fullstack | `01-Initiation/02-Iris-Deployments.md` | Docker Desktop | ~45 min |
-| TD Data Pipeline | `02-Data_Pipeline/02_K8s_Data_pipeline.md` | Docker Desktop | ~1h30 |
-| TD MLOps | `03-MLOPS/03_K8s_MLOPS.md` | Minikube | ~1h30 |
+| Fiche 1 — Prise en main | `01-Initiation/01-Introduction.md` | Docker Desktop | ~30 à 45 min |
+| Fiche 2 — Déploiement fullstack | `01-Initiation/02-Iris-Deployments.md` | Docker Desktop | ~30 à 45 min |
+| TD Data Pipeline | `02-Data_Pipeline/02_K8s_Data_pipeline.md` | Docker Desktop | ~1h |
+| TD MLOps | `03-MLOPS/03_K8s_MLOPS.md` | Minikube | ~1h |
 | Bonus — Pratiques avancées | `01-Initiation/03-Advanced (Bonus).md` | Docker Desktop | ~1h |
 
 > ⚠️ **Ordre recommandé** : suivez les ateliers dans l'ordre du tableau. Chaque atelier s'appuie sur les concepts vus dans le précédent.
