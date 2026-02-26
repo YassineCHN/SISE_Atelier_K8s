@@ -724,6 +724,8 @@ pip install -r requirements.txt
 
 # revenez à la racine du projet avec cd ..
 
+> ⚠️ **Important** : lancez d'abord le port-forward dans le Terminal 1 et attendez qu'il soit actif avant d'ouvrir le Terminal 2. Sans cela, MLflow sera inaccessible et l'entraînement échouera.
+
 # Terminal 1 : Port-forward MLflow (laissez ce terminal ouvert)
 kubectl port-forward svc/mlflow-service 5000:5000
 
