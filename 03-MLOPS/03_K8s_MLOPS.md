@@ -145,7 +145,7 @@ spec:
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
-          subPath: postgres  # ⚠️ Important : évite les erreurs de permissions PostgreSQL
+          subPath: postgres  #  Important : évite les erreurs de permissions PostgreSQL
         resources:
           requests:
             cpu: 100m
